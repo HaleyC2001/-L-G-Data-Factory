@@ -564,43 +564,40 @@ if st.button("🚀 Generate Report", disabled=not all_uploaded, type="primary", 
             if students_demo is not None:
                 copy_sheet(students_demo, wb, 'Participant Demographics', skip_rows=3)
 
-            # ── Apply Arial Narrow 10pt font to all cells, plus green/red ─────
-            # color-coding on the Student Summary Statistics % columns.
+            # ── Apply red/green color to the 15+ % column on Student Summary ──
+            # Only the "15+ hrs (% of Target)" column gets colored: red <100%, green >=100%.
+            # Colors are baked into Arial Narrow 10pt fonts so the workbook-wide font
+            # pass below doesn't overwrite them.
             arial_narrow_default = Font(name='Arial Narrow', size=10)
-            arial_narrow_green = Font(name='Arial Narrow', size=10, color='006100')  # dark green
-            arial_narrow_red = Font(name='Arial Narrow', size=10, color='9C0006')    # dark red
+            arial_narrow_red = Font(name='Arial Narrow', size=10, color='FF0000')
+            arial_narrow_green = Font(name='Arial Narrow', size=10, color='008000')
 
-            def pct_color_font(cell_value):
-                """Return green font if pct >= 100, red if < 100, default otherwise."""
-                try:
-                    s = str(cell_value)
-                    pct = int(s.split('(')[1].replace('%)', '').strip())
-                    return arial_narrow_green if pct >= 100 else arial_narrow_red
-                except Exception:
-                    return arial_narrow_default
+            # Track which (sheet, row, col) cells should keep a colored font
+            colored_cells = {}  # (sheet_name, row, col) -> Font
 
-            pct_color_cols = {
-                '# of students 15+ hrs total (% of Target)',
-                '# of students 90+ hrs total (% of Target)',
-            }
+            if 'Student Summary Statistics' in wb.sheetnames:
+                ws_sss = wb['Student Summary Statistics']
+                header_map = {cell.value: cell.column for cell in ws_sss[1]}
+                target_col = '# of students 15+ hrs total (% of Target)'
+                if target_col in header_map:
+                    col_idx = header_map[target_col]
+                    for row_idx in range(2, ws_sss.max_row + 1):
+                        cell = ws_sss.cell(row=row_idx, column=col_idx)
+                        try:
+                            pct = int(str(cell.value).split('(')[1].replace('%)', '').strip())
+                            colored_cells[('Student Summary Statistics', row_idx, col_idx)] = (
+                                arial_narrow_green if pct >= 100 else arial_narrow_red
+                            )
+                        except Exception:
+                            pass
 
+            # ── Apply Arial Narrow 10pt font to all cells ─────────────────────
+            # Cells flagged in colored_cells get a colored Arial Narrow font instead.
             for ws_name in wb.sheetnames:
-                ws_iter = wb[ws_name]
-
-                # Build header map only for the Student Summary sheet
-                pct_col_indices = set()
-                if ws_name == 'Student Summary Statistics':
-                    header_map = {cell.value: cell.column for cell in ws_iter[1]}
-                    for col_name in pct_color_cols:
-                        if col_name in header_map:
-                            pct_col_indices.add(header_map[col_name])
-
-                for row in ws_iter.iter_rows():
+                for row in wb[ws_name].iter_rows():
                     for cell in row:
-                        if cell.row > 1 and cell.column in pct_col_indices:
-                            cell.font = pct_color_font(cell.value)
-                        else:
-                            cell.font = arial_narrow_default
+                        key = (ws_name, cell.row, cell.column)
+                        cell.font = colored_cells.get(key, arial_narrow_default)
 
             final_buffer = io.BytesIO()
             wb.save(final_buffer)
