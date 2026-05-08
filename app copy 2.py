@@ -282,11 +282,13 @@ if st.button("🚀 Generate Report", disabled=not all_uploaded, type="primary", 
                         df[col] = ""
 
                 # Create a unique staff ID. Email is best; if email is blank, use first + last name.
-                email = df["Email Address"].astype(str).str.strip().str.lower()
+                # Note: .fillna("nan") ensures NaN values become the literal string "nan"
+                # so the .eq("nan") checks below behave consistently across pandas versions.
+                email = df["Email Address"].astype(str).str.strip().str.lower().fillna("nan")
                 name_id = (
-                    df["First Name"].astype(str).str.strip().str.lower()
+                    df["First Name"].astype(str).str.strip().str.lower().fillna("nan")
                     + "|"
-                    + df["Last Name"].astype(str).str.strip().str.lower()
+                    + df["Last Name"].astype(str).str.strip().str.lower().fillna("nan")
                 )
                 df["_staff_id"] = np.where(
                     email.ne("") & email.ne("nan"),
@@ -297,9 +299,9 @@ if st.button("🚀 Generate Report", disabled=not all_uploaded, type="primary", 
                 # Count each staff member once per site
                 df = df.drop_duplicates(subset=[site_col, "_staff_id"]).copy()
 
-                staff_type = df["Staff Type"].astype(str).str.strip()
-                comp_type = df["Compensation Type"].astype(str).str.strip()
-                funder = df["Funder"].astype(str).str.strip()
+                staff_type = df["Staff Type"].astype(str).str.strip().fillna("nan")
+                comp_type = df["Compensation Type"].astype(str).str.strip().fillna("nan")
+                funder = df["Funder"].astype(str).str.strip().fillna("nan")
 
                 # Staff Type: blank / Not Entered / Other are not accepted
                 df["Staff Type_missing"] = (
