@@ -1,9 +1,8 @@
 """
-CSD3 Weekly Report Processor — Streamlit App
+Weekly Report Processor — Streamlit App
 Upload 3 source Excel files, set targets, get a fully-formatted Excel report.
 """
 
-import io
 import os
 import tempfile
 
@@ -15,7 +14,7 @@ from openpyxl.styles import PatternFill
 
 
 # ----------------------------------------------------------------------
-# Core processing functions (ported from notebook)
+# Core processing functions
 # ----------------------------------------------------------------------
 
 def summarize_missing_by_school(df, columns_to_check, category_col="Site"):
@@ -640,20 +639,20 @@ def process_reports(students_file, adults_file, all_file, target_values):
 # Streamlit UI
 # ----------------------------------------------------------------------
 
-st.set_page_config(page_title="CSD3 Weekly Report Processor", layout="wide")
-st.title("CSD3 Weekly Report Processor")
+st.set_page_config(page_title="Weekly Report Processor", layout="wide")
+st.title("Weekly Report Processor")
 st.caption("Upload the 3 source Excel files, set targets, generate the formatted report.")
 
 with st.sidebar:
     st.header("1. Upload source files")
     students_file = st.file_uploader(
-        "Students workbook (Students_CSD3_Weekly Reports...)", type=["xlsx", "xls"]
+        "Students workbook", type=["xlsx", "xls"]
     )
     adults_file = st.file_uploader(
-        "Adults workbook (Adults_CSD3_Weekly Reports...)", type=["xlsx", "xls"]
+        "Adults workbook", type=["xlsx", "xls"]
     )
     all_file = st.file_uploader(
-        "All workbook (All_CSD3_Weekly Reports...)", type=["xlsx", "xls"]
+        "All workbook", type=["xlsx", "xls"]
     )
 
     st.header("2. Targets")
