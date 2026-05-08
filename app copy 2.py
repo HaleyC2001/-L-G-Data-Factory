@@ -266,61 +266,62 @@ if st.button("🚀 Generate Report", disabled=not all_uploaded, type="primary", 
                 summarize_missing_by_school(df_part_demo, columns_of_interest)
 
             # ── Staff Missing Info ────────────────────────────────────────────
+            # Strictly follows the notebook's `summarize_staff_missing_info` logic.
             st.write("👥 Processing Staff Details…")
             df_staff = pd.read_excel(io.BytesIO(all_bytes), sheet_name="Staff Details", skiprows=2)
 
-            def summarize_staff_missing_info(df_staff, site_col='Site'):
+            def summarize_staff_missing_info(df_staff, site_col="Site"):
                 df = df_staff.copy()
 
                 # Keep rows with a valid site
-                df = df[df[site_col].notna() & (df[site_col].astype(str).str.strip() != '')].copy()
+                df = df[df[site_col].notna() & (df[site_col].astype(str).str.strip() != "")].copy()
 
                 # Make sure key columns exist
-                for col in ['Email Address', 'First Name', 'Last Name', 'Staff Type', 'Compensation Type', 'Funder']:
+                for col in ["Email Address", "First Name", "Last Name", "Staff Type", "Compensation Type", "Funder"]:
                     if col not in df.columns:
-                        df[col] = ''
+                        df[col] = ""
 
                 # Create a unique staff ID. Email is best; if email is blank, use first + last name.
-                email = df['Email Address'].astype(str).str.strip().str.lower()
+                email = df["Email Address"].astype(str).str.strip().str.lower()
                 name_id = (
-                    df['First Name'].astype(str).str.strip().str.lower()
-                    + '|'
-                    + df['Last Name'].astype(str).str.strip().str.lower()
+                    df["First Name"].astype(str).str.strip().str.lower()
+                    + "|"
+                    + df["Last Name"].astype(str).str.strip().str.lower()
                 )
-                df['_staff_id'] = np.where(
-                    email.ne('') & email.ne('nan'),
+                df["_staff_id"] = np.where(
+                    email.ne("") & email.ne("nan"),
                     email,
                     name_id
                 )
 
                 # Count each staff member once per site
-                df = df.drop_duplicates(subset=[site_col, '_staff_id']).copy()
+                df = df.drop_duplicates(subset=[site_col, "_staff_id"]).copy()
 
-                staff_type = df['Staff Type'].astype(str).str.strip()
-                comp_type = df['Compensation Type'].astype(str).str.strip()
-                funder = df['Funder'].astype(str).str.strip()
+                staff_type = df["Staff Type"].astype(str).str.strip()
+                comp_type = df["Compensation Type"].astype(str).str.strip()
+                funder = df["Funder"].astype(str).str.strip()
 
                 # Staff Type: blank / Not Entered / Other are not accepted
-                df['Staff Type_missing'] = (
-                    staff_type.eq('')
-                    | staff_type.str.lower().isin(['nan', 'not entered', 'other'])
+                df["Staff Type_missing"] = (
+                    staff_type.eq("")
+                    | staff_type.str.lower().isin(["nan", "not entered", "other"])
                 ).astype(int)
 
                 # Compensation Type: must be Paid or Volunteer
-                df['Employment Type_missing'] = (
-                    comp_type.eq('')
-                    | comp_type.str.lower().isin(['nan', 'not entered'])
-                    | ~comp_type.str.lower().isin(['paid', 'volunteer'])
+                df["Employment Type_missing"] = (
+                    comp_type.eq("")
+                    | comp_type.str.lower().isin(["nan", "not entered"])
+                    | ~comp_type.str.lower().isin(["paid", "volunteer"])
                 ).astype(int)
 
                 # Funder:
                 # - Paid staff must have a funder and it should be 21st CCLC.
                 # - Volunteers may leave Funder blank.
-                is_volunteer = comp_type.str.lower().eq('volunteer')
-                funder_blank = funder.eq('') | funder.str.lower().isin(['nan', 'not entered'])
-                funder_not_21cclc = ~funder.str.contains('21', case=False, na=False)
+                is_volunteer = comp_type.str.lower().eq("volunteer")
+                funder_blank = funder.eq("") | funder.str.lower().isin(["nan", "not entered"])
+                funder_not_21cclc = ~funder.str.contains("21", case=False, na=False)
 
-                df['Funded by 21st CCLC_missing'] = (
+                df["Funded by 21st CCLC_missing"] = (
                     ((~is_volunteer) & funder_blank)
                     | ((~funder_blank) & funder_not_21cclc)
                 ).astype(int)
@@ -329,19 +330,19 @@ if st.button("🚀 Generate Report", disabled=not all_uploaded, type="primary", 
                     df.groupby(site_col)
                     .agg(
                         **{
-                            '# of Active Program Staff': ('_staff_id', 'nunique'),
-                            'Staff Type': ('Staff Type_missing', 'sum'),
-                            'Employment Type': ('Employment Type_missing', 'sum'),
-                            'Funded by 21st CCLC': ('Funded by 21st CCLC_missing', 'sum'),
+                            "# of Active Program Staff": ("_staff_id", "nunique"),
+                            "Staff Type": ("Staff Type_missing", "sum"),
+                            "Employment Type": ("Employment Type_missing", "sum"),
+                            "Funded by 21st CCLC": ("Funded by 21st CCLC_missing", "sum"),
                         }
                     )
                     .reset_index()
-                    .rename(columns={site_col: 'Site'})
+                    .rename(columns={site_col: "Site"})
                 )
 
-                total_row = {'Site': 'Total'}
+                total_row = {"Site": "Total"}
                 for col in staff_missing_summary.columns:
-                    if col != 'Site':
+                    if col != "Site":
                         total_row[col] = staff_missing_summary[col].sum()
 
                 staff_missing_summary = pd.concat(
@@ -350,9 +351,9 @@ if st.button("🚀 Generate Report", disabled=not all_uploaded, type="primary", 
                 )
 
                 staff_flag_cols = [
-                    'Staff Type_missing',
-                    'Employment Type_missing',
-                    'Funded by 21st CCLC_missing',
+                    "Staff Type_missing",
+                    "Employment Type_missing",
+                    "Funded by 21st CCLC_missing",
                 ]
 
                 staff_missing_rows = df[df[staff_flag_cols].sum(axis=1) > 0].copy()
@@ -563,12 +564,43 @@ if st.button("🚀 Generate Report", disabled=not all_uploaded, type="primary", 
             if students_demo is not None:
                 copy_sheet(students_demo, wb, 'Participant Demographics', skip_rows=3)
 
-            # ── Apply Arial Narrow 10pt font to all cells ─────────────────────
-            arial_narrow = Font(name='Arial Narrow', size=10)
+            # ── Apply Arial Narrow 10pt font to all cells, plus green/red ─────
+            # color-coding on the Student Summary Statistics % columns.
+            arial_narrow_default = Font(name='Arial Narrow', size=10)
+            arial_narrow_green = Font(name='Arial Narrow', size=10, color='006100')  # dark green
+            arial_narrow_red = Font(name='Arial Narrow', size=10, color='9C0006')    # dark red
+
+            def pct_color_font(cell_value):
+                """Return green font if pct >= 100, red if < 100, default otherwise."""
+                try:
+                    s = str(cell_value)
+                    pct = int(s.split('(')[1].replace('%)', '').strip())
+                    return arial_narrow_green if pct >= 100 else arial_narrow_red
+                except Exception:
+                    return arial_narrow_default
+
+            pct_color_cols = {
+                '# of students 15+ hrs total (% of Target)',
+                '# of students 90+ hrs total (% of Target)',
+            }
+
             for ws_name in wb.sheetnames:
-                for row in wb[ws_name].iter_rows():
+                ws_iter = wb[ws_name]
+
+                # Build header map only for the Student Summary sheet
+                pct_col_indices = set()
+                if ws_name == 'Student Summary Statistics':
+                    header_map = {cell.value: cell.column for cell in ws_iter[1]}
+                    for col_name in pct_color_cols:
+                        if col_name in header_map:
+                            pct_col_indices.add(header_map[col_name])
+
+                for row in ws_iter.iter_rows():
                     for cell in row:
-                        cell.font = arial_narrow
+                        if cell.row > 1 and cell.column in pct_col_indices:
+                            cell.font = pct_color_font(cell.value)
+                        else:
+                            cell.font = arial_narrow_default
 
             final_buffer = io.BytesIO()
             wb.save(final_buffer)
