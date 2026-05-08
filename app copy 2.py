@@ -560,9 +560,9 @@ if st.button("🚀 Generate Report", disabled=not all_uploaded, type="primary", 
             students_demo = find_sheet(students_wb_src, 'Participant Demographics')
 
             if students_phb is not None:
-                copy_sheet(students_phb, wb, 'Students - Participants By Hour', skip_rows=4)
+                copy_sheet(students_phb, wb, 'Students - Participants By Hour', skip_rows=2)
             if adults_phb is not None:
-                copy_sheet(adults_phb, wb, 'Adults - Participants By Hour', skip_rows=4)
+                copy_sheet(adults_phb, wb, 'Adults - Participants By Hour', skip_rows=2)
             if students_demo is not None:
                 copy_sheet(students_demo, wb, 'Participant Demographics', skip_rows=3)
 
