@@ -1,5 +1,1 @@
-# -L-G-Data-Factory
-
-
-
-https://qqzsskaaqn3zokfbbcckyv.streamlit.app/
+https://9rz6dwioygywac4bpofyrf.streamlit.app
