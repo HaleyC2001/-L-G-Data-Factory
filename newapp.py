@@ -123,8 +123,17 @@ if st.button("🚀 Generate Report", disabled=not all_uploaded, type="primary", 
             daily_site_att = daily_site_att.iloc[3:]
             daily_site_att.columns.name = None
             daily_site_att = daily_site_att.reset_index(drop=True)
-            daily_site_att = daily_site_att[['Total']].iloc[:-1]
-            daily_site_att['Total'] = daily_site_att['Total'].str.extract(r'(\d+\.?\d*)')
+            # daily_site_att = daily_site_att[['Total']].iloc[:-1]
+            # daily_site_att['Total'] = daily_site_att['Total'].str.extract(r'(\d+\.?\d*)')
+            ###this part of the change is bc the orginal website took down the 'total' col 
+            # Convert all columns except the first to numeric
+            daily_site_att.iloc[:, 1:] = daily_site_att.iloc[:, 1:].apply(pd.to_numeric, errors='coerce')
+            # Now calculate the row-wise average
+            daily_site_att['Total'] = daily_site_att.iloc[:, 1:].mean(axis=1)
+            daily_site_att['Total'] = pd.to_numeric(daily_site_att['Total']).round(0).astype(int)
+            daily_site_att = daily_site_att[['Total']]  
+
+            ##
 
             all_cols = ['0 Hours', 'Less Than 15 Hours', '15-44 Hours', '45-89 Hours', '90-179 Hours', '180-269 Hours', '270+ Hours']
             served_cols = ['Less Than 15 Hours', '15-44 Hours', '45-89 Hours', '90-179 Hours', '180-269 Hours', '270+ Hours']
