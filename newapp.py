@@ -251,8 +251,24 @@ if st.button("🚀 Generate Report", disabled=not all_uploaded, type="primary", 
                 all_mf['ParticipantID_missing'] = (~vpa).astype(int)
                 all_mf['State ParticipantID_missing'] = (~vsa).astype(int)
 
-                dob_parsed = pd.to_datetime(all_mf['Date Of Birth'], errors='coerce')
-                all_mf['DOB_too_young'] = ((dob_parsed.dt.year > 2023) | (dob_parsed.dt.year < 2004)).astype(int)
+                # dob_parsed = pd.to_datetime(all_mf['Date Of Birth'], errors='coerce')
+                # all_mf['DOB_too_young'] = ((dob_parsed.dt.year > 2023) | (dob_parsed.dt.year < 2004)).astype(int)
+
+                today = pd.Timestamp.today().normalize()  # strips time component
+                dob_parsed = pd.to_datetime(all_mf["Date Of Birth"], errors="coerce")
+                all_mf["DOB_too_young"] = (
+                    (dob_parsed > today - pd.DateOffset(years=4)) |  # born after → under 4
+                    (dob_parsed < today - pd.DateOffset(years=21) - pd.DateOffset(days=1))  # born before → over 21... 
+                    # simpler alternative below ↓
+                ).astype(int)
+
+
+
+
+
+
+
+
 
                 flag_cols2 = [col + '_missing' for col in columns_to_check] + ['ParticipantID_missing', 'DOB_too_young']
                 total_missing_rows = all_mf[all_mf[flag_cols2].sum(axis=1) > 0].copy()
